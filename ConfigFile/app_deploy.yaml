@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpapp
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phpapp
+  template:
+    metadata:
+      labels:
+        app: phpapp
+    spec:
+      containers:
+        - name: phpapp
+          image: ravindu0032/crud:v1
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_HOST
+              value: mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secret
+                  key: mysql-database
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secret
+                  key: mysql-user
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: demo-secret
+                  key: mysql-password
+          envFrom:
+            - configMapRef:
+                name: app-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phpapp
+  namespace: demo
+spec:
+  selector:
+    app: phpapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
